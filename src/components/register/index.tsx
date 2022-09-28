@@ -2,12 +2,13 @@ import React from 'react';
 import Base from '../base';
 import { $modules } from '../../context';
 import { log, makeKey } from '../../utils';
+import Hook, { AllHookProps, HookProps } from '../hook';
 
 type RegisterType = {
   component?: any;
   name: string;
-  hooks?: React.ReactElement[];
-  targetHooks?: React.ReactElement[];
+  hooks?: HookProps[];
+  targetHooks?: HookProps[];
   children?: React.ReactNode;
   label?: string;
 };
@@ -31,7 +32,7 @@ class Register extends Base<RegisterType> {
     const { component, label, name: moduleName } = this.props;
     const key = makeKey(moduleName);
     const moduleKey = key.module();
-    const alreadyHas = $modules().has(moduleKey);
+    const has = $modules().has(moduleKey);
 
     $modules().add(moduleKey, {
       label,
@@ -39,9 +40,27 @@ class Register extends Base<RegisterType> {
       component: component || this.props.children,
     });
 
-    if (alreadyHas) {
-      log(`[module] ${moduleName} module replaced.`, this.isSilent);
+    if (has) {
+      log(`${moduleName} module replaced.`, this.isSilent);
     }
+  }
+
+  private prepareHook(hooks: HookProps[], extra: object = {}) {
+    const { name } = this.props;
+    return hooks.map((props: HookProps, index) => {
+      const { name: hookName } = props;
+      const $moduleName = hookName.includes(':')
+        ? hookName.split(':')[0]
+        : name;
+
+      const newProps = {
+        ...props,
+        ...extra,
+        $moduleName,
+      } as AllHookProps;
+
+      return <Hook {...newProps} key={index} />;
+    });
   }
 
   shouldComponentUpdate() {
@@ -50,16 +69,10 @@ class Register extends Base<RegisterType> {
 
   render() {
     const { hooks = [], targetHooks = [], name } = this.props;
-    const mainHooks = hooks.map((element, index) => {
-      return React.cloneElement(element, { $isMainHook: true, $moduleName: name, key: index });
-    });
+    const mainHooks = this.prepareHook(hooks, { $isMainHook: true });
+    const newTargetHooks = this.prepareHook(targetHooks);
 
-    const newTargetHooks = targetHooks.map((element, index) => {
-      const $moduleName = element.props.name.split(':')[0];
-      return React.cloneElement(element, { $moduleName, $from: name, key: index });
-    });
-
-    log(`[module] ${this.props.name} module registered.`, this.isSilent);
+    log(`${name} module registered.`, this.isSilent);
 
     return (
       <>

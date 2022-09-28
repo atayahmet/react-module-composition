@@ -3,13 +3,13 @@ import { ServiceContainer } from './container';
 
 export const log = (msg: string, status: boolean = true) => {
   if (status) {
-    console.log(`[react-modular] ${msg}`);
+    console.log(`[RMC] ${msg}`);
   }
 };
 
 export const warn = (msg: string, status: boolean = true) => {
   if (status) {
-    console.warn(`[react-modular] ${msg}`);
+    console.warn(`[RMC] ${msg}`);
   }
 };
 
@@ -24,6 +24,7 @@ export const bindHook = (
     ({ $isMainHook, $from, label, name, handler, type: moduleType }) => {
       const hookName = makeHookName(name, moduleName);
       const data = { name: hookName, label, $isMainHook, handler, moduleType };
+
       if ($isMainHook) {
         container.add(`${hookName}:$main`, data);
       }

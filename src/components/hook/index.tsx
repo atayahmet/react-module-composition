@@ -2,20 +2,20 @@ import Base from '../base';
 import { $modules, $hooks, $options } from '../../context';
 import { bindHook, log, makeKey, warn } from '../../utils';
 
-type HookProps = {
+export type HookProps = {
   name: string;
   label?: string;
   handler: CallableFunction;
 };
 
-type AllProps = HookProps & {
+export type AllHookProps = HookProps & {
   $moduleName: string;
   $isMainHook: boolean;
   $from?: string;
 };
 
 class Hook extends Base<HookProps> {
-  constructor(props: AllProps) {
+  constructor(props: AllHookProps) {
     super(props);
     this.bindHook();
   }
@@ -37,7 +37,7 @@ class Hook extends Base<HookProps> {
       $moduleName,
       $from,
       $isMainHook = false,
-    } = this.props as AllProps;
+    } = this.props as AllHookProps;
 
     if (!$moduleName) {
       const msg = `Module not found for "${name}" hook!`;
@@ -52,11 +52,13 @@ class Hook extends Base<HookProps> {
       log(`[hook] ${$from} -> ${$moduleName}  [${name}]`, this.isSlient);
     }
 
-    const moduleKey = makeKey($moduleName).module();
-    const module = $modules().get(moduleKey);
+    const key = makeKey($moduleName).module();
+    const module = $modules().get(key);
 
     const registerHook = bindHook(module.name, $hooks());
-    registerHook([{ $isMainHook, $from, name, label, handler, type: module.type }]);
+    registerHook([
+      { $isMainHook, $from, name, label, handler, type: module.type },
+    ]);
   }
 
   render() {
